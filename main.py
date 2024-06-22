@@ -2,6 +2,7 @@
 Python console application to manage data sources and calculate metrics.
 """
 
+import pandas as pd
 
 # launch menu function -- it should be called after every action
 def menu():
@@ -13,6 +14,36 @@ def menu():
         c. Calculate metric.
     """
     pass
+
+i=0
+
+
+def inv_input():
+    print("Invalid option. It should be 'a', 'b', or 'c'. Please try again\n")
+
+
+print('Hello! Welcome to Python console application!')
+
+while i==0:
+    menus_input=input('Choose one of the following options:\n'
+      'a. Check existing information\n'
+      'b. Add a new data source (file)\n'
+      'c. Calculate metric\n'
+      'I choose: ')
+
+    if menus_input.isalpha():
+        if menus_input == 'a':
+            print('here should be metrics\n\n\n')
+        elif menus_input == 'b':
+            print('Please, enter data source file path: \n\n\n')
+        elif menus_input == 'c':
+            print('here should be metrics\n\n\n')
+        else:
+            inv_input()
+    else:
+        inv_input()
+
+
 
 
 # Implement validation and adding logic here
