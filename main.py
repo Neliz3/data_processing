@@ -69,7 +69,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-# TODO: install pandas
-# TODO: see instructions how to deal with csv file
-# TODO: realization of menu() --> Polina
