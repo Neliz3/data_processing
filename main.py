@@ -2,17 +2,7 @@
 Python console application to manage data sources and calculate metrics.
 """
 
-
-# launch menu function -- it should be called after every action
-def menu():
-    """
-    Main menu realization
-    When the application starts, the user sees a menu with three options:
-        a. Check existing information;
-        b. Add a new data source (file);
-        c. Calculate metric.
-    """
-    pass
+import keyboard
 
 
 # Implement validation and adding logic here
@@ -30,7 +20,7 @@ def add_new_data_source():
     col_1 name | col_2 name | … | col_n name
     Total records: 10256
     """
-    pass
+    print('Please, enter data source file path: \n\n\n')
 
 
 # Later we divide this into two separate functions: select_data_source() and calculate_metrics()
@@ -62,9 +52,41 @@ def checker(datasource: dict):
     pass
 
 
+# launch menu function -- it should be called after every action
+def menu():
+    """
+    Main menu realization
+    When the application starts, the user sees a menu with three options:
+        a. Check existing information;
+        b. Add a new data source (file);
+        c. Calculate metric.
+    """
+
+    print('Hello! Welcome to Python console application!\n')
+
+    while True:
+        menus_input = input('Choose one of the following options:\n'
+                            'a. Check existing information\n'
+                            'b. Add a new data source (file)\n'
+                            'c. Calculate metric\n'
+                            'I choose: ')
+
+        if menus_input.lower() in ('a', 'b', 'c'):
+            if menus_input == 'a':
+                print('here should be metrics\n\n\n')
+            elif menus_input == 'b':
+                add_new_data_source()
+            elif menus_input == 'c':
+                print('here should be metrics\n\n\n')
+        else:
+            print("Invalid option. It should be 'a', 'b', or 'c'. Please try again\n")
+
+    print('Good buy! Thanks for using Python console application!')
+
+
 # While not user enter Ctrl + D (to close the program) we continue show a menu after each operation
 def main():
-    pass
+    menu()
 
 
 if __name__ == '__main__':
