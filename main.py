@@ -2,10 +2,16 @@
 Python console application to manage data sources and calculate metrics.
 """
 
-import keyboard
+from pynput.keyboard import Key, Controller, Listener
+import csv
+import readline
+import sys
+
+STOP = False
+DATA_SOURCE = []
+pointer = 0
 
 
-# Implement validation and adding logic here
 def add_new_data_source():
     """
     Add New Data Source (File):
@@ -20,27 +26,55 @@ def add_new_data_source():
     col_1 name | col_2 name | … | col_n name
     Total records: 10256
     """
-    print('Please, enter data source file path: \n\n\n')
+    file_path = input('Please, enter data source file path: ')
+    DATA_SOURCE.append(file_path)
+
+    with open(file_path, 'r') as csv_file:
+        data = csv.DictReader(csv_file)
+        print(f'{data.fieldnames}\n'
+              f'\nDatasource structure:'
+              f'\nTotal records: {len(csv_file.readlines())}')
 
 
-# Later we divide this into two separate functions: select_data_source() and calculate_metrics()
-def calculate_metric():
+def on_press_key(key):
+    # TODO: validation a length of DATA_SOURCE
+    global pointer
+    if key == Key.left:
+        pointer -= 1
+    elif key == Key.right:
+        pointer += 1
+    elif key == Key.enter:
+        return False
+    print("\r" + " " * 50 + "\r" + "> " + DATA_SOURCE[pointer], end='')  # \r - go to start of a line
+
+
+def select_data_source() -> str:
     """
-    Calculate Metric:
-    1. The user selects a data source from the added ones using keyboard navigation.
+    The user selects a data source from the added ones using keyboard navigation.
     Example:
     > Select data source: <- -> # user has to see data source name when click arrow buttons
     Selected data source: datasource.csv | Total records: 10256 records
+    """
 
-    2. The application calculates and displays a metric for the selected data source.
+    # TODO: validation whether DATA_SOURCE null or not
+    with Listener(on_press=on_press_key) as listener:
+        input(f'Please, choose a datasource using keyboard arrows and press ENTER:\n> {DATA_SOURCE[pointer]}')
+        listener.join()
+
+    return DATA_SOURCE[pointer]
+
+
+def calculate_metric(file):
+    """
+    The application calculates and displays a metric for the selected data source.
     Example:
     Based on the dataset, {metric name} was calculated. Value is: {value}.
     """
-    pass
+    # TODO: find a csv file
+    print(file)
 
 
-# datasource is a dictionary where we store added data sources
-def checker(datasource: dict):
+def checker():
     """
     Check Existing Information:
         The application shows the names of the last three added data sources and their metrics.
@@ -61,32 +95,39 @@ def menu():
         b. Add a new data source (file);
         c. Calculate metric.
     """
+    menus_input = input('\nChoose one of the following options:\n'
+                        'a. Check existing information\n'
+                        'b. Add a new data source (file)\n'
+                        'c. Calculate metric\n'
+                        'I choose: ')
 
+    if menus_input.lower() in ('a', 'b', 'c'):
+        if menus_input == 'a':
+            print('here should be metrics\n\n\n')
+        elif menus_input == 'b':
+            add_new_data_source()
+        elif menus_input == 'c':
+            file = select_data_source()
+            calculate_metric(file)
+    else:
+        print("Invalid option. It should be 'a', 'b', or 'c'. Please try again\n")
+
+
+def on_press(key):
+    global STOP
+    if key == Key.alt:
+        STOP = True
+
+
+# Main flow of the application
+def main():
     print('Hello! Welcome to Python console application!\n')
 
-    while True:
-        menus_input = input('Choose one of the following options:\n'
-                            'a. Check existing information\n'
-                            'b. Add a new data source (file)\n'
-                            'c. Calculate metric\n'
-                            'I choose: ')
-
-        if menus_input.lower() in ('a', 'b', 'c'):
-            if menus_input == 'a':
-                print('here should be metrics\n\n\n')
-            elif menus_input == 'b':
-                add_new_data_source()
-            elif menus_input == 'c':
-                print('here should be metrics\n\n\n')
-        else:
-            print("Invalid option. It should be 'a', 'b', or 'c'. Please try again\n")
+    with Listener(on_press=on_press):
+        while not STOP:
+            menu()
 
     print('Good buy! Thanks for using Python console application!')
-
-
-# While not user enter Ctrl + D (to close the program) we continue show a menu after each operation
-def main():
-    menu()
 
 
 if __name__ == '__main__':
