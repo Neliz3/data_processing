@@ -109,7 +109,7 @@ def checker():
         for i in data_sources[-3:]:
             print()
     elif number_of_files == 2:
-        for source in data_sources[-2:]:
+        for i in data_sources[-2:]:
             print()
     elif number_of_files == 1:
         print()
