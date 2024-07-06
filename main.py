@@ -1,14 +1,22 @@
 """
 Python console application to manage data sources and calculate metrics.
+
+DATA_SOURCE = {
+    'datasource.csv':
+        {
+            'total_records': 5,
+            'operating_margin': 4000.3,
+        }
+}
 """
 
-from pynput.keyboard import Key, Controller, Listener
+from pynput.keyboard import Key, Listener
 import csv
-import readline
-import sys
+import readline  # Used for avoiding a mistake using arrows
+import pandas as pd
 
 STOP = False
-DATA_SOURCE = []
+DATA_SOURCE = {}
 pointer = 0
 
 
@@ -27,18 +35,25 @@ def add_new_data_source():
     Total records: 10256
     """
     file_path = input('Please, enter data source file path: ')
-    DATA_SOURCE.append(file_path)
+    df = pd.read_csv(file_path)
 
-    with open(file_path, 'r') as csv_file:
-        data = csv.DictReader(csv_file)
-        print(f'{data.fieldnames}\n'
-              f'\nDatasource structure:'
-              f'\nTotal records: {len(csv_file.readlines())}')
+    columns = ' | '.join(df.columns.values)
+    total_records = len(df)
+
+    DATA_SOURCE.update(
+        {
+            file_path: {
+                'total_records': total_records,
+            }}
+    )
+    print(f'\nDatasource structure:'
+          f'\n{columns}'
+          f'\nTotal records: {total_records}')
 
 
 def on_press_key(key):
-    # TODO: validation a length of DATA_SOURCE
-    # done
+    files = list(DATA_SOURCE.keys())
+
     global pointer
     if key == Key.left and pointer > 0:
         pointer -= 1
@@ -46,31 +61,29 @@ def on_press_key(key):
         pointer += 1
     elif key == Key.enter:
         return False
-    print("\r" + " " * 50 + "\r" + "> " + DATA_SOURCE[pointer], end='')  # \r - go to start of a line
+    print("\r" + " " * 50 + "\r" + "> " + files[pointer], end='')  # \r - go to start of a line
 
 
-def select_data_source() -> str:
+def select_data_source() -> (str, None):
     """
     The user selects a data source from the added ones using keyboard navigation.
     Example:
     > Select data source: <- -> # user has to see data source name when click arrow buttons
     Selected data source: datasource.csv | Total records: 10256 records
     """
-
-    # TODO: validation whether DATA_SOURCE null or not
-    # done
+    files = list(DATA_SOURCE.keys())
 
     if len(DATA_SOURCE) == 0:
-        print("No available data sources")
-        return ""
+        print("No available data sources.")
+        return None
 
-    pointer = 0
+    global pointer
 
     with Listener(on_press=on_press_key) as listener:
-        input(f'Please, choose a datasource using keyboard arrows and press ENTER:\n> {DATA_SOURCE[pointer]}')
+        input(f'Please, choose a datasource using keyboard arrows and press ENTER:\n> {files[pointer]}')
         listener.join()
 
-    return DATA_SOURCE[pointer]
+    return files[pointer]
 
 
 def calculate_metric(file):
@@ -79,17 +92,19 @@ def calculate_metric(file):
     Example:
     Based on the dataset, {metric name} was calculated. Value is: {value}.
     """
-    # TODO: find a csv file
-    # sent in tg
-    print(file)
 
-# why do we print our file?
+    df = pd.read_csv(file)
 
-#  code here could be smth like:
-import pandas as pd
-df = pd.read_csv(DATA_SOURCE) # here should be file path, if i understand it correctly, it's DATA_SOURCE
-df['operating_margin'] = df['operatingIncome'] / df['revenue']
-print('Based on the dataset, operating_margin was calculated. Value is: df['operating_margin'])
+    # Check whether csv contains the column or not
+    try:
+        total_operating_income = sum(df[' operatingIncome'])
+        total_revenue = sum(df[' revenue'])
+
+        operating_margin = total_operating_income / total_revenue * 100
+        DATA_SOURCE.get(file).update({'operating_margin': operating_margin})  # Updating a DATA_SOURCE
+        print(f"Based on the dataset, operating margin was calculated. Value is: {operating_margin}.")
+    except Exception as ex:
+        print(f"File doesn't have the appropriate data. Error occurred: ", ex)
 
 
 def checker():
@@ -101,26 +116,19 @@ def checker():
     2) Datasource: MicrosoftLTVs2020-2023.csv | Metric: Average LTV = 720$
     3) Datasource: MicrosoftLTVs2020-2023.csv | Metric: Average LTV = 720$
     """
-    #  code here could be smth like this, but with written print:
 
-    number_of_files = len(data_sources)
+    # TODO: work with fine output (use '\t' for it)
+    # TODO: add validation if DATA_SOURCE is null
+    # TODO: add validation if didn't calculate metrics yet, we can't show them
 
-    if number_of_files >= 3:
-        for i in data_sources[-3:]:
-            print()
-    elif number_of_files == 2:
-        for i in data_sources[-2:]:
-            print()
-    elif number_of_files == 1:
-        print()
-    else:
-        print()
+    counter = 0
+    for file_name, metrics in DATA_SOURCE.items():
+        if counter >= 3:
+            break
+        print(file_name, metrics['operating_margin'])
+        counter += 1
 
 
-    pass
-
-
-# launch menu function -- it should be called after every action
 def menu():
     """
     Main menu realization
@@ -137,12 +145,13 @@ def menu():
 
     if menus_input.lower() in ('a', 'b', 'c'):
         if menus_input == 'a':
-            print('here should be metrics\n\n\n')
+            checker()
         elif menus_input == 'b':
             add_new_data_source()
         elif menus_input == 'c':
             file = select_data_source()
-            calculate_metric(file)
+            if file is not None:  # if DATA_SOURCE is not null & user chose a file
+                calculate_metric(file)
     else:
         print("Invalid option. It should be 'a', 'b', or 'c'. Please try again\n")
 
