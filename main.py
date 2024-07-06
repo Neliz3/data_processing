@@ -38,10 +38,11 @@ def add_new_data_source():
 
 def on_press_key(key):
     # TODO: validation a length of DATA_SOURCE
+    # done
     global pointer
-    if key == Key.left:
+    if key == Key.left and pointer > 0:
         pointer -= 1
-    elif key == Key.right:
+    elif key == Key.right and pointer < len(DATA_SOURCE) - 1:
         pointer += 1
     elif key == Key.enter:
         return False
@@ -57,6 +58,14 @@ def select_data_source() -> str:
     """
 
     # TODO: validation whether DATA_SOURCE null or not
+    # done
+
+    if len(DATA_SOURCE) == 0:
+        print("No available data sources")
+        return ""
+
+    pointer = 0
+
     with Listener(on_press=on_press_key) as listener:
         input(f'Please, choose a datasource using keyboard arrows and press ENTER:\n> {DATA_SOURCE[pointer]}')
         listener.join()
@@ -71,7 +80,16 @@ def calculate_metric(file):
     Based on the dataset, {metric name} was calculated. Value is: {value}.
     """
     # TODO: find a csv file
+    # sent in tg
     print(file)
+
+# why do we print our file?
+
+#  code here could be smth like:
+import pandas as pd
+df = pd.read_csv(DATA_SOURCE) # here should be file path, if i understand it correctly, it's DATA_SOURCE
+df['operating_margin'] = df['operatingIncome'] / df['revenue']
+print('Based on the dataset, operating_margin was calculated. Value is: df['operating_margin'])
 
 
 def checker():
@@ -83,6 +101,22 @@ def checker():
     2) Datasource: MicrosoftLTVs2020-2023.csv | Metric: Average LTV = 720$
     3) Datasource: MicrosoftLTVs2020-2023.csv | Metric: Average LTV = 720$
     """
+    #  code here could be smth like this, but with written print:
+
+    number_of_files = len(data_sources)
+
+    if number_of_files >= 3:
+        for i in data_sources[-3:]:
+            print()
+    elif number_of_files == 2:
+        for source in data_sources[-2:]:
+            print()
+    elif number_of_files == 1:
+        print()
+    else:
+        print()
+
+
     pass
 
 
