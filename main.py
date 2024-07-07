@@ -11,7 +11,6 @@ DATA_SOURCE = {
 """
 
 from pynput.keyboard import Key, Listener
-import csv
 import readline  # Used for avoiding a mistake using arrows
 import pandas as pd
 
@@ -22,22 +21,21 @@ pointer = 0
 
 def add_new_data_source():
     """
-    Add New Data Source (File):
     1. The application asks for the path to a new data source file.
-    Example:
-    > Enter data source file path:
-    < C://…/datasource.csv  # input of user
-
     2. The application displays the structure and total records of the file or ERROR and new attempt
-    Example:
-    > Datasource structure:
-    col_1 name | col_2 name | … | col_n name
-    Total records: 10256
     """
-    file_path = input('Please, enter data source file path: ')
-    df = pd.read_csv(file_path)
 
-    columns = ' | '.join(df.columns.values)
+    file_path = input('Please, enter data source file path: ')
+    df = ''
+
+    try:
+        df = pd.read_csv(file_path)
+    except Exception as error:
+        print('Error with file occurred: ', error)
+    else:
+        add_new_data_source()
+
+    columns = ' | '.join(df.columns.values)  # Beautiful output
     total_records = len(df)
 
     DATA_SOURCE.update(
@@ -51,8 +49,9 @@ def add_new_data_source():
           f'\nTotal records: {total_records}')
 
 
-def on_press_key(key):
-    files = list(DATA_SOURCE.keys())
+#  Instruction on the event: a key is pressed
+def on_press(key):
+    files = list(DATA_SOURCE.keys())  # Getting file names from a dictionary
 
     global pointer
     if key == Key.left and pointer > 0:
@@ -67,70 +66,72 @@ def on_press_key(key):
 def select_data_source() -> (str, None):
     """
     The user selects a data source from the added ones using keyboard navigation.
-    Example:
-    > Select data source: <- -> # user has to see data source name when click arrow buttons
-    Selected data source: datasource.csv | Total records: 10256 records
     """
-    files = list(DATA_SOURCE.keys())
 
+    files = list(DATA_SOURCE.keys())  # Getting file names from a dictionary
+
+    # Validation if user didn't add a data source yet
     if len(DATA_SOURCE) == 0:
         print("No available data sources.")
         return None
 
     global pointer
 
-    with Listener(on_press=on_press_key) as listener:
-        input(f'Please, choose a datasource using keyboard arrows and press ENTER:\n> {files[pointer]}')
-        listener.join()
-
-    return files[pointer]
+    # Handling the error if something goes wrong with keys pressing
+    try:
+        # The Listener class is used to monitor keyboard inputs,
+        # and on_press is a function that gets called whenever a key is pressed. [Chat-GPT explanation]
+        with Listener(on_press=on_press) as listener:
+            input(f'Please, choose a datasource using keyboard arrows and press ENTER:\n> {files[pointer]}')
+            listener.join()
+            return files[pointer]
+    except Exception as error:
+        print("No selected DATA SOURCES: ", error)
 
 
 def calculate_metric(file):
     """
-    The application calculates and displays a metric for the selected data source.
-    Example:
-    Based on the dataset, {metric name} was calculated. Value is: {value}.
+    The application calculates and displays the operating margin for the selected data source.
     """
 
     df = pd.read_csv(file)
 
-    # Check whether csv contains the column or not
+    # Handling the error if csv doesn't contain the columns
     try:
         total_operating_income = sum(df[' operatingIncome'])
         total_revenue = sum(df[' revenue'])
-
         operating_margin = total_operating_income / total_revenue * 100
-        DATA_SOURCE.get(file).update({'operating_margin': operating_margin})  # Updating a DATA_SOURCE
+
+        file_data = DATA_SOURCE.get(file)
+        file_data.update({'operating_margin': operating_margin})
+
         print(f"Based on the dataset, operating margin was calculated. Value is: {operating_margin}.")
-    except Exception as ex:
-        print(f"File doesn't have the appropriate data. Error occurred: ", ex)
+    except Exception as error:
+        print(f"File doesn't have the appropriate data. Error occurred: ", error)
 
 
 def checker():
     """
-    Check Existing Information:
-        The application shows the names of the last three added data sources and their metrics.
-        Example:
-    1) Datasource: MicrosoftLTVs2020-2023.csv | Metric: Average LTV = 720$
-    2) Datasource: MicrosoftLTVs2020-2023.csv | Metric: Average LTV = 720$
-    3) Datasource: MicrosoftLTVs2020-2023.csv | Metric: Average LTV = 720$
+    The function shows the names of the last three added data sources and their metrics.
     """
 
-    # TODO: work with fine output (use '\t' for it)
-    # TODO: add validation if DATA_SOURCE is null
-    # TODO: add validation if didn't calculate metrics yet, we can't show them
-
+    operating_margin = "NOT CALCULATED"
     counter = 0
     for file_name, metrics in DATA_SOURCE.items():
+
+        # Limited output up to 3 lines
         if counter >= 3:
             break
-        elif not DATA_SOURCE:
-             print("There isn't any added data sources")
-        print('Datasource: ', file_name, '\t', 'Metric: ',  metrics['operating_margin'])
-        counter +=  1
 
-#yesterday i wrote a code for cases when we have 1 or 2 metrics, but you deleted it, are you sure that we don't need them?
+        # Handling the error if user didn't calculate metrics yet
+        try:
+            operating_margin = metrics['operating_margin']
+        except Exception as error:
+            print("You didn't calculate metrics yet: ", error)
+        finally:  # Anyway do the next
+            print('Datasource: ', file_name, '\t', 'Metric: ',  operating_margin)
+            counter += 1
+
 
 def menu():
     """
@@ -143,10 +144,11 @@ def menu():
     menus_input = input('\nChoose one of the following options:\n'
                         'a. Check existing information\n'
                         'b. Add a new data source (file)\n'
-                        'c. Calculate metric\n'
+                        'c. Calculate metrics\n'
+                        'd. Exit\n'
                         'I choose: ')
 
-    if menus_input.lower() in ('a', 'b', 'c'):
+    if menus_input.lower() in ('a', 'b', 'c', 'd'):
         if menus_input == 'a':
             checker()
         elif menus_input == 'b':
@@ -155,23 +157,19 @@ def menu():
             file = select_data_source()
             if file is not None:  # if DATA_SOURCE is not null & user chose a file
                 calculate_metric(file)
+        else:
+            global STOP
+            STOP = True
     else:
-        print("Invalid option. It should be 'a', 'b', or 'c'. Please try again\n")
-
-
-def on_press(key):
-    global STOP
-    if key == Key.alt:
-        STOP = True
+        print("Invalid option. It should be 'a', 'b', 'c' or 'd'. Please try again\n")
 
 
 # Main flow of the application
 def main():
     print('Hello! Welcome to Python console application!\n')
 
-    with Listener(on_press=on_press):
-        while not STOP:
-            menu()
+    while not STOP:
+        menu()
 
     print('Good buy! Thanks for using Python console application!')
 
