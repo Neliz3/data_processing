@@ -18,6 +18,7 @@ import readline  # Used to avoid typing "^[[D" etc. using arrows
 
 STOP = False
 DATA_SOURCE = {}
+METRIC = 'operating margin'
 pointer = 0
 
 
@@ -115,7 +116,7 @@ def calculate_metric(file):
         file_data = DATA_SOURCE.get(file)
         file_data.update({'operating_margin': operating_margin})
 
-        print(f"Based on the dataset, operating margin was calculated. Value is: {operating_margin}.")
+        print(f"Based on the dataset, {METRIC} margin was calculated. Value is: {operating_margin}.")
     except Exception as error:
         print(f"File doesn't have the appropriate data. Error occurred: ", error)
 
@@ -142,7 +143,7 @@ def check_info():
         except Exception as error:
             print("You didn't calculate metrics yet: ", error)
         finally:  # Anyway do the next
-            print('Datasource: ', file_name, '\t', 'Operating Margin: ',  operating_margin)
+            print(f'Datasource: {file_name}\t{METRIC}: {operating_margin}')
             counter += 1
 
 
