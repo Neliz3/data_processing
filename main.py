@@ -10,13 +10,25 @@ DATA_SOURCE = {
 }
 """
 
-from pynput.keyboard import Key, Listener
-import readline  # Used for avoiding a mistake using arrows
 import pandas as pd
+from pynput.keyboard import Key, Listener
+
+import readline  # Used to avoid typing "^[[D" etc. using arrows
+
 
 STOP = False
 DATA_SOURCE = {}
 pointer = 0
+
+
+def data_source_is_null() -> bool:
+    """
+    Validation if user didn't add a data source yet.
+    """
+    if len(DATA_SOURCE) == 0:
+        print("No available data sources.")
+        return False
+    return True
 
 
 def add_new_data_source():
@@ -26,27 +38,26 @@ def add_new_data_source():
     """
 
     file_path = input('Please, enter data source file path: ')
-    df = ''
 
+    # Handling the error if file is not read properly
     try:
         df = pd.read_csv(file_path)
+
+        columns = ' | '.join(df.columns.values)  # Beautiful output
+        total_records = len(df)
+
+        DATA_SOURCE.update(
+            {
+                file_path: {
+                    'total_records': total_records,
+                }}
+        )
+        print(f'\nDatasource structure:'
+              f'\n{columns}'
+              f'\nTotal records: {total_records}')
     except Exception as error:
         print('Error with file occurred: ', error)
-    else:
         add_new_data_source()
-
-    columns = ' | '.join(df.columns.values)  # Beautiful output
-    total_records = len(df)
-
-    DATA_SOURCE.update(
-        {
-            file_path: {
-                'total_records': total_records,
-            }}
-    )
-    print(f'\nDatasource structure:'
-          f'\n{columns}'
-          f'\nTotal records: {total_records}')
 
 
 #  Instruction on the event: a key is pressed
@@ -70,9 +81,7 @@ def select_data_source() -> (str, None):
 
     files = list(DATA_SOURCE.keys())  # Getting file names from a dictionary
 
-    # Validation if user didn't add a data source yet
-    if len(DATA_SOURCE) == 0:
-        print("No available data sources.")
+    if not data_source_is_null():
         return None
 
     global pointer
@@ -98,6 +107,7 @@ def calculate_metric(file):
 
     # Handling the error if csv doesn't contain the columns
     try:
+        # Getting total values
         total_operating_income = sum(df[' operatingIncome'])
         total_revenue = sum(df[' revenue'])
         operating_margin = total_operating_income / total_revenue * 100
@@ -110,14 +120,17 @@ def calculate_metric(file):
         print(f"File doesn't have the appropriate data. Error occurred: ", error)
 
 
-def checker():
+def check_info():
     """
     The function shows the names of the last three added data sources and their metrics.
     """
 
-    operating_margin = "NOT CALCULATED"
+    if not data_source_is_null():
+        return None
+
     counter = 0
     for file_name, metrics in DATA_SOURCE.items():
+        operating_margin = "NOT CALCULATED"
 
         # Limited output up to 3 lines
         if counter >= 3:
@@ -129,7 +142,7 @@ def checker():
         except Exception as error:
             print("You didn't calculate metrics yet: ", error)
         finally:  # Anyway do the next
-            print('Datasource: ', file_name, '\t', 'Metric: ',  operating_margin)
+            print('Datasource: ', file_name, '\t', 'Operating Margin: ',  operating_margin)
             counter += 1
 
 
@@ -141,6 +154,7 @@ def menu():
         b. Add a new data source (file);
         c. Calculate metric.
     """
+
     menus_input = input('\nChoose one of the following options:\n'
                         'a. Check existing information\n'
                         'b. Add a new data source (file)\n'
@@ -150,7 +164,7 @@ def menu():
 
     if menus_input.lower() in ('a', 'b', 'c', 'd'):
         if menus_input == 'a':
-            checker()
+            check_info()
         elif menus_input == 'b':
             add_new_data_source()
         elif menus_input == 'c':
@@ -164,7 +178,6 @@ def menu():
         print("Invalid option. It should be 'a', 'b', 'c' or 'd'. Please try again\n")
 
 
-# Main flow of the application
 def main():
     print('Hello! Welcome to Python console application!\n')
 
