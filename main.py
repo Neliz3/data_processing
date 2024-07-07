@@ -125,9 +125,11 @@ def checker():
     for file_name, metrics in DATA_SOURCE.items():
         if counter >= 3:
             break
-        print(file_name, metrics['operating_margin'])
-        counter += 1
-
+        elif not DATA_SOURCE:
+             print("There isn't any added data sources")
+        print('Datasource: ', file_name, '\t', 'Metric: ',  metrics['operating_margin'])
+        counter +=  1
+#yesterday i wrote a code for cases when we have 1 or 2 metrics, but you deleted it, are you sure that we don't need them?
 
 def menu():
     """
